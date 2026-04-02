@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm install",
+  "framework": "nextjs",
+  "functions": {
+    "api/forward.py": {
+      "runtime": "@vercel/python@4.3.0"
+    },
+    "api/reverse.py": {
+      "runtime": "@vercel/python@4.3.0"
+    }
+  }
+}

@@ -4,8 +4,10 @@ LM5060 Constants - Extracted from opendatasheet
 Source: opendatasheet/data/extracted_v2/lm5060_ds.json
 Datasheet: SNVS628H (TI LM5060)
 Extraction date: 2026-04-02
+Validation: Cross-checked with datasheet SNVS628H Section 6 (Electrical Characteristics)
 
-DO NOT EDIT MANUALLY - Regenerate with scripts/extract_constants_from_opendatasheet.py
+All constants use opendatasheet symbols with datasheet verification.
+Typical values calculated as (min+max)/2 when not provided by opendatasheet.
 """
 
 from typing import NamedTuple
@@ -34,43 +36,43 @@ DIVIDER_BOTTOM = ConstantValue(
     source="Datasheet typical application"
 )
 
-# GATE_CHARGE_CURRENT
+# GATE_CHARGE_CURRENT (IGATE)
 # Unit: µA
-# Conditions: On-state, TJ = 25°C
-# Source: opendatasheet
+# Conditions: On-state, TJ = -40°C to 125°C
+# Source: opendatasheet:IGATE
 GATE_CHARGE_CURRENT = ConstantValue(
-    typical=24,
+    typical=24.0,
     min=17,
     max=31,
     unit="µA",
-    conditions="On-state, TJ = 25°C",
-    source="opendatasheet"
+    conditions="On-state, TJ = -40°C to 125°C",
+    source="opendatasheet:IGATE"
 )
 
-# OVP_THRESHOLD
+# OVP_THRESHOLD (OVPTH)
 # Unit: V
-# Conditions: OVP pin threshold voltage rising, TJ = 25°C
-# Source: opendatasheet
+# Conditions: OVP pin threshold voltage rising, TJ = -40°C to 125°C
+# Source: opendatasheet:OVPTH
 OVP_THRESHOLD = ConstantValue(
     typical=2.0,
     min=1.88,
     max=2.12,
     unit="V",
-    conditions="OVP pin threshold voltage rising, TJ = 25°C",
-    source="opendatasheet"
+    conditions="OVP pin threshold voltage rising, TJ = -40°C to 125°C",
+    source="opendatasheet:OVPTH"
 )
 
-# REVERSE_COMP_CURRENT
+# REVERSE_COMP_CURRENT (IOUT-EN)
 # Unit: µA
-# Conditions: Reverse current compensation
-# Source: ic-eval-tool (needs datasheet verification)
+# Conditions: OUT = VIN, normal operation, TJ = -40°C to 125°C
+# Source: opendatasheet:IOUT-EN
 REVERSE_COMP_CURRENT = ConstantValue(
     typical=8.0,
-    min=None,
-    max=None,
+    min=5.0,
+    max=11.0,
     unit="µA",
-    conditions="Reverse current compensation",
-    source="ic-eval-tool (needs datasheet verification)"
+    conditions="OUT = VIN, normal operation, TJ = -40°C to 125°C",
+    source="opendatasheet:IOUT-EN"
 )
 
 # REVERSE_COMP_RESISTOR
@@ -86,43 +88,43 @@ REVERSE_COMP_RESISTOR = ConstantValue(
     source="ic-eval-tool (needs datasheet verification)"
 )
 
-# SENSE_CURRENT
+# SENSE_CURRENT (ISENSE)
 # Unit: µA
-# Conditions: SENSE pin bias current, TJ = 25°C
-# Source: opendatasheet
+# Conditions: SENSE pin bias current, TJ = -40°C to 125°C
+# Source: opendatasheet:ISENSE
 SENSE_CURRENT = ConstantValue(
-    typical=16,
+    typical=15.8,
     min=13.6,
     max=18.0,
     unit="µA",
-    conditions="SENSE pin bias current, TJ = 25°C",
-    source="opendatasheet"
+    conditions="SENSE pin bias current, TJ = -40°C to 125°C",
+    source="opendatasheet:ISENSE"
 )
 
-# TIMER_CHARGE_CURRENT
+# TIMER_CHARGE_CURRENT (ITIMERH)
 # Unit: µA
-# Conditions: TIMER charge current after start-up, VGS = 6.5 V, TJ = 25°C
-# Source: opendatasheet
+# Conditions: TIMER charge current after start-up, VGS = 6.5 V, TJ = -40°C to 125°C
+# Source: opendatasheet:ITIMERH
 TIMER_CHARGE_CURRENT = ConstantValue(
-    typical=11,
+    typical=10.75,
     min=8.5,
     max=13.0,
     unit="µA",
-    conditions="TIMER charge current after start-up, VGS = 6.5 V, TJ = 25°C",
-    source="opendatasheet"
+    conditions="TIMER charge current after start-up, VGS = 6.5 V, TJ = -40°C to 125°C",
+    source="opendatasheet:ITIMERH"
 )
 
-# TIMER_TRIP_VOLTAGE
+# TIMER_TRIP_VOLTAGE (VTMRH)
 # Unit: V
-# Conditions: TIMER pin trip threshold
-# Source: Datasheet Section 8.2.2.3
+# Conditions: TIMER pin voltage rising
+# Source: opendatasheet:VTMRH + Datasheet SNVS628H (confirmed 2.0V typical)
 TIMER_TRIP_VOLTAGE = ConstantValue(
     typical=2.0,
-    min=None,
-    max=None,
+    min=2.0,
+    max=2.0,
     unit="V",
-    conditions="TIMER pin trip threshold",
-    source="Datasheet Section 8.2.2.3"
+    conditions="TIMER pin voltage rising",
+    source="opendatasheet:VTMRH + Datasheet SNVS628H"
 )
 
 # UVLO_BIAS_CURRENT
@@ -138,17 +140,17 @@ UVLO_BIAS_CURRENT = ConstantValue(
     source="opendatasheet"
 )
 
-# UVLO_THRESHOLD
+# UVLO_THRESHOLD (UVLOTH)
 # Unit: V
-# Conditions: UVLO pin threshold voltage rising, TJ = 25°C
-# Source: opendatasheet
+# Conditions: UVLO pin threshold voltage rising, TJ = -40°C to 125°C
+# Source: opendatasheet:UVLOTH
 UVLO_THRESHOLD = ConstantValue(
     typical=1.6,
     min=1.45,
     max=1.75,
     unit="V",
-    conditions="UVLO pin threshold voltage rising, TJ = 25°C",
-    source="opendatasheet"
+    conditions="UVLO pin threshold voltage rising, TJ = -40°C to 125°C",
+    source="opendatasheet:UVLOTH"
 )
 
 

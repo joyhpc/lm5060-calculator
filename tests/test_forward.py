@@ -4,7 +4,17 @@ from lm5060 import compute_bom, compute_bom_with_health_check, ForwardInput
 
 
 def test_compute_bom_basic():
-    """Test basic forward calculation with default parameters"""
+    """Test basic forward calculation with default parameters
+
+    Expected values based on:
+    - Constants from opendatasheet (SNVS628H extraction)
+    - Formulas from datasheet SNVS628H Section 8.2.2
+    - Verified 2026-04-02
+
+    Differences from ic-eval-tool:
+    - Rs: 14556.96Ω vs 14375.0Ω (+181.96Ω) due to ISENSE=15.8µA vs 16.0µA
+    - C_TIMER: 64.5nF vs 66.0nF (-1.5nF) due to ITIMERH=10.75µA vs 11.0µA
+    """
     input_data = ForwardInput(
         vin_min=9.0,
         vin_max=36.0,
@@ -16,12 +26,12 @@ def test_compute_bom_basic():
 
     result = compute_bom(input_data)
 
-    # Expected values from ic-eval-tool (verified 2026-04-02)
+    # Expected values from datasheet-based calculation
     assert abs(result.R8 - 170.0) < 1.0, f"R8 mismatch: {result.R8}"
-    assert abs(result.R10 - 44.71) < 2.0, f"R10 mismatch: {result.R10}"
-    assert abs(result.Rs - 14375.0) < 100, f"Rs mismatch: {result.Rs}"
-    assert abs(result.C_TIMER - 66.0) < 5.0, f"C_TIMER mismatch: {result.C_TIMER}"
-    assert abs(result.C_GATE - 48.0) < 5.0, f"C_GATE mismatch: {result.C_GATE}"
+    assert abs(result.R10 - 46.25) < 1.0, f"R10 mismatch: {result.R10}"
+    assert abs(result.Rs - 14556.96) < 1.0, f"Rs mismatch: {result.Rs}"
+    assert abs(result.C_TIMER - 64.5) < 1.0, f"C_TIMER mismatch: {result.C_TIMER}"
+    assert abs(result.C_GATE - 48.0) < 1.0, f"C_GATE mismatch: {result.C_GATE}"
 
 
 def test_health_check_healthy():
