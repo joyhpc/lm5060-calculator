@@ -22,6 +22,15 @@ export const IC_TOLERANCES = {
   /** OVP 阈值 (V) - Section 6.5, Page 7 */
   OVP_THRESHOLD: { min: 1.88, typ: 2.0, max: 2.12 },
 
+  /** OVP 迟滞 (V) - 固定电压迟滞，不是电流迟滞
+   * 来源：opendatasheet OVPHYS parameter
+   * 注意：与 UVLO 不同，OVP 使用固定电压偏移，不依赖电阻值 */
+  OVP_HYSTERESIS: { min: null, typ: 0.24, max: null },  // 240mV
+
+  /** OVP 偏置电流 (µA) - 几乎为零，不影响触发电压计算
+   * 来源：opendatasheet OVPBIAS parameter */
+  OVP_BIAS_CURRENT: { min: null, typ: 0, max: 0.5 },
+
   /** UVLO 偏置电流 (µA) - Section 6.5, Page 7 */
   UVLO_BIAS_CURRENT: { min: 3.8, typ: 5.5, max: 7.2 },
 
@@ -199,6 +208,9 @@ export interface WCAResult {
   /** OVP 触发电压范围 (V) */
   ovp_threshold: { min: number; typ: number; max: number }
 
+  /** OVP 恢复电压范围 (V) - 固定 240mV 迟滞 */
+  ovp_recovery: { min: number; typ: number; max: number }
+
   /** 电流限制范围 (A) */
   i_limit: { min: number; typ: number; max: number }
 
@@ -349,7 +361,17 @@ export function computeWCA(input: WCAInput): WCAResult {
   const R8_max = R8_standard * (1 + tol)
   const ovp_threshold_max = ovp_th_max * (1 + R8_max / (R9 * (1 - tol)))
 
-  // 3.4 电流限制范围
+  // 3.4 OVP 恢复电压（固定电压迟滞）
+  // 注意：与 UVLO 不同，OVP 使用固定 240mV 迟滞，不依赖 R8 阻值
+  // 来源：opendatasheet OVPHYS = 240mV (typical)
+  const ovp_hys_typ = IC_TOLERANCES.OVP_HYSTERESIS.typ || 0.24  // 240mV
+
+  // OVP 恢复电压 = OVP 触发电压 - 迟滞电压
+  const ovp_recovery_typ = ovp_threshold_typ - ovp_hys_typ
+  const ovp_recovery_min = ovp_threshold_min - ovp_hys_typ  // 保守估计：使用典型迟滞
+  const ovp_recovery_max = ovp_threshold_max - ovp_hys_typ
+
+  // 3.5 电流限制范围
   const i_sense_min = IC_TOLERANCES.SENSE_CURRENT.min / 1e6
   const i_sense_max = IC_TOLERANCES.SENSE_CURRENT.max / 1e6
   const i_comp_min = IC_TOLERANCES.REVERSE_COMP_CURRENT.min / 1e6
@@ -429,6 +451,7 @@ export function computeWCA(input: WCAInput): WCAResult {
     uvlo_rising: { min: uvlo_rising_min, typ: uvlo_rising_typ, max: uvlo_rising_max },
     uvlo_falling: { min: uvlo_falling_min, typ: uvlo_falling_typ, max: uvlo_falling_max },
     ovp_threshold: { min: ovp_threshold_min, typ: ovp_threshold_typ, max: ovp_threshold_max },
+    ovp_recovery: { min: ovp_recovery_min, typ: ovp_recovery_typ, max: ovp_recovery_max },
     i_limit: { min: i_limit_min, typ: i_limit_typ, max: i_limit_max },
 
     ideal_bom: {

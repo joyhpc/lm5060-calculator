@@ -164,30 +164,58 @@ function HysteresisVisualization({ result }: { result: WCAResult }) {
   const offset = result.hysteresis_offset
 
   return (
-    <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <div className="font-semibold text-blue-900 mb-2">
-        ⚡ 迟滞电流导致的关断电压偏移
-      </div>
-      <div className="text-sm text-blue-800 mb-3">
-        当 UVLO 引脚低于阈值时，引脚吸入 {IC_TOLERANCES.UVLO_HYSTERESIS_CURRENT.typ} µA 电流（范围 {IC_TOLERANCES.UVLO_HYSTERESIS_CURRENT.min}~{IC_TOLERANCES.UVLO_HYSTERESIS_CURRENT.max} µA），
-        通过 R10 产生电压降，导致实际关断电压低于理想分压值。
-      </div>
-      <div className="flex items-center gap-4 text-xs font-mono">
-        <div>
-          <span className="text-gray-600">Min 偏移:</span>
-          <span className="ml-2 text-red-600 font-semibold">-{offset.min.toFixed(3)} V</span>
+    <div className="space-y-3">
+      {/* UVLO 迟滞电流 */}
+      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="font-semibold text-blue-900 mb-2">
+          ⚡ UVLO 迟滞电流导致的关断电压偏移
         </div>
-        <div>
-          <span className="text-gray-600">Typ 偏移:</span>
-          <span className="ml-2 text-blue-600 font-semibold">-{offset.typ.toFixed(3)} V</span>
+        <div className="text-sm text-blue-800 mb-3">
+          当 UVLO 引脚低于阈值时，引脚吸入 {IC_TOLERANCES.UVLO_HYSTERESIS_CURRENT.typ} µA 电流（范围 {IC_TOLERANCES.UVLO_HYSTERESIS_CURRENT.min}~{IC_TOLERANCES.UVLO_HYSTERESIS_CURRENT.max} µA），
+          通过 R10 产生电压降，导致实际关断电压低于理想分压值。
         </div>
-        <div>
-          <span className="text-gray-600">Max 偏移:</span>
-          <span className="ml-2 text-orange-600 font-semibold">-{offset.max.toFixed(3)} V</span>
+        <div className="flex items-center gap-4 text-xs font-mono">
+          <div>
+            <span className="text-gray-600">Min 偏移:</span>
+            <span className="ml-2 text-red-600 font-semibold">-{offset.min.toFixed(3)} V</span>
+          </div>
+          <div>
+            <span className="text-gray-600">Typ 偏移:</span>
+            <span className="ml-2 text-blue-600 font-semibold">-{offset.typ.toFixed(3)} V</span>
+          </div>
+          <div>
+            <span className="text-gray-600">Max 偏移:</span>
+            <span className="ml-2 text-orange-600 font-semibold">-{offset.max.toFixed(3)} V</span>
+          </div>
+        </div>
+        <div className="mt-3 text-xs text-blue-700 bg-blue-100 p-2 rounded">
+          💡 公式：ΔV = I_HYS × R10（来源：Datasheet SNVS628H Section 8.2.3.2.1, Page 31）
         </div>
       </div>
-      <div className="mt-3 text-xs text-blue-700 bg-blue-100 p-2 rounded">
-        💡 公式：ΔV = I_HYS × R10（来源：Datasheet SNVS628H Section 8.2.3.2.1, Page 31）
+
+      {/* OVP 固定电压迟滞 */}
+      <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+        <div className="font-semibold text-green-900 mb-2">
+          🔒 OVP 固定电压迟滞（与 UVLO 不同）
+        </div>
+        <div className="text-sm text-green-800 mb-3">
+          OVP 使用固定 240mV 电压迟滞，不依赖 R8 阻值。
+          OVP 恢复电压 = OVP 触发电压 - 240mV。
+          这与 UVLO 的电流迟滞机制不同。
+        </div>
+        <div className="flex items-center gap-4 text-xs font-mono">
+          <div>
+            <span className="text-gray-600">固定迟滞:</span>
+            <span className="ml-2 text-green-600 font-semibold">240 mV</span>
+          </div>
+          <div>
+            <span className="text-gray-600">OVP 偏置电流:</span>
+            <span className="ml-2 text-green-600 font-semibold">≈0 µA（可忽略）</span>
+          </div>
+        </div>
+        <div className="mt-3 text-xs text-green-700 bg-green-100 p-2 rounded">
+          💡 来源：opendatasheet OVPHYS = 240mV (typical)
+        </div>
       </div>
     </div>
   )
@@ -256,6 +284,12 @@ export default function WCAResultDisplay({ result }: Props) {
             label="OVP 触发电压"
             range={result.ovp_threshold}
             unit="V"
+          />
+          <RangeDisplay
+            label="OVP 恢复电压（240mV 迟滞）"
+            range={result.ovp_recovery}
+            unit="V"
+            highlight
           />
           <RangeDisplay
             label="电流限制"
