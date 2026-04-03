@@ -276,10 +276,13 @@ export function computeWCA(input: WCAInput): WCAResult {
   const r_comp = IC_TOLERANCES.REVERSE_COMP_RESISTOR
 
   // R8 = R9 × (VIN_MAX - OVPTH) / OVPTH
+  // 结果单位：kΩ
   const R8_ideal = R9 * (input.vin_max - ovp_th_typ) / ovp_th_typ
 
   // R10 = (VIN_MIN - UVLOTH) / (UVLO_BIAS + UVLOTH/R11)
-  const R10_ideal = (input.vin_min - uvlo_th_typ) / (i_uvlo_bias_typ + uvlo_th_typ / (R11 * 1000))
+  // 结果单位：Ω，需要转换为 kΩ
+  const R10_ideal_ohm = (input.vin_min - uvlo_th_typ) / (i_uvlo_bias_typ + uvlo_th_typ / (R11 * 1000))
+  const R10_ideal = R10_ideal_ohm / 1000  // 转换为 kΩ
 
   // V_DSTH = I_LIMIT × RDS(ON)
   const v_dsth = input.i_limit * (input.rds_on / 1000)
@@ -298,8 +301,8 @@ export function computeWCA(input: WCAInput): WCAResult {
   // ========================================================================
 
   const series = input.resistor_tolerance === '5%' ? 'E24' : 'E96'
-  const R8_standard = snapToStandardResistor(R8_ideal, series)
-  const R10_standard = snapToStandardResistor(R10_ideal, series)
+  const R8_standard = snapToStandardResistor(R8_ideal, series)  // 输入 kΩ
+  const R10_standard = snapToStandardResistor(R10_ideal, series)  // 输入 kΩ
 
   // ========================================================================
   // Step 3: 最坏情况分析（Min/Typ/Max）

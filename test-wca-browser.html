@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>WCA 计算器测试</title>
+  <style>
+    body { font-family: monospace; padding: 20px; }
+    .result { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+    .error { background: #ffcccc; }
+    .success { background: #ccffcc; }
+  </style>
+</head>
+<body>
+  <h1>WCA 计算器调试测试</h1>
+  <button onclick="testWCA()">运行测试</button>
+  <div id="output"></div>
+
+  <script type="module">
+    // 复制 IC_TOLERANCES
+    const IC_TOLERANCES = {
+      UVLO_THRESHOLD: { min: 1.45, typ: 1.6, max: 1.75 },
+      OVP_THRESHOLD: { min: 1.88, typ: 2.0, max: 2.12 },
+      UVLO_BIAS_CURRENT: { min: 3.8, typ: 5.5, max: 7.2 },
+      UVLO_HYSTERESIS_CURRENT: { min: 16, typ: 21, max: 26 },
+      SENSE_CURRENT: { min: 13.6, typ: 15.8, max: 18.0 },
+      TIMER_CHARGE_CURRENT: { min: 8.5, typ: 10.75, max: 13.0 },
+      GATE_CHARGE_CURRENT: { min: 17, typ: 24, max: 31 },
+      REVERSE_COMP_CURRENT: { min: 5.0, typ: 8.0, max: 11.0 },
+      REVERSE_COMP_RESISTOR: 10000,
+      TIMER_TRIP_VOLTAGE: 2.0,
+    }
+
+    // E96 序列（简化版）
+    const E96_SERIES = [
+      1.00, 1.02, 1.05, 1.07, 1.10, 1.13, 1.15, 1.18, 1.21, 1.24,
+      1.27, 1.30, 1.33, 1.37, 1.40, 1.43, 1.47, 1.50, 1.54, 1.58,
+      1.62, 1.65, 1.69, 1.74, 1.78, 1.82, 1.87, 1.91, 1.96, 2.00,
+      2.05, 2.10, 2.15, 2.21, 2.26, 2.32, 2.37, 2.43, 2.49, 2.55,
+      2.61, 2.67, 2.74, 2.80, 2.87, 2.94, 3.01, 3.09, 3.16, 3.24,
+      3.32, 3.40, 3.48, 3.57, 3.65, 3.74, 3.83, 3.92, 4.02, 4.12,
+      4.22, 4.32, 4.42, 4.53, 4.64, 4.75, 4.87, 4.99, 5.11, 5.23,
+      5.36, 5.49, 5.62, 5.76, 5.90, 6.04, 6.19, 6.34, 6.49, 6.65,
+      6.81, 6.98, 7.15, 7.32, 7.50, 7.68, 7.87, 8.06, 8.25, 8.45,
+      8.66, 8.87, 9.09, 9.31, 9.53, 9.76,
+    ]
+
+    function snapToStandardResistor(value, series = 'E96') {
+      const seriesData = E96_SERIES
+      const magnitude = Math.floor(Math.log10(value))
+      const normalized = value / Math.pow(10, magnitude)
+
+      let closest = seriesData[0]
+      let minDiff = Math.abs(normalized - closest)
+
+      for (const candidate of seriesData) {
+        const diff = Math.abs(normalized - candidate)
+        if (diff < minDiff) {
+          minDiff = diff
+          closest = candidate
+        }
+      }
+
+      return closest * Math.pow(10, magnitude)
+    }
+
+    window.testWCA = function() {
+      const output = document.getElementById('output')
+      output.innerHTML = '<h2>测试开始...</h2>'
+
+      const input = {
+        vin_min: 9.0,
+        vin_max: 36.0,
+        i_limit: 30.0,
+        rds_on: 5.0,
+        ocp_delay: 12.0,
+        dvdt: 0.5,
+        resistor_tolerance: '1%',
+      }
+
+      const tol = 0.01
+      const R9 = 10.0
+      const R11 = 10.0
+
+      const ovp_th_typ = IC_TOLERANCES.OVP_THRESHOLD.typ
+      const uvlo_th_typ = IC_TOLERANCES.UVLO_THRESHOLD.typ
+      const i_uvlo_bias_typ = IC_TOLERANCES.UVLO_BIAS_CURRENT.typ / 1e6
+
+      output.innerHTML += `<div class="result">输入参数: ${JSON.stringify(input)}</div>`
+      output.innerHTML += `<div class="result">uvlo_th_typ: ${uvlo_th_typ} V</div>`
+      output.innerHTML += `<div class="result">i_uvlo_bias_typ: ${i_uvlo_bias_typ} A</div>`
+
+      // 计算理想 R10
+      const R10_ideal = (input.vin_min - uvlo_th_typ) / (i_uvlo_bias_typ + uvlo_th_typ / (R11 * 1000))
+      output.innerHTML += `<div class="result">R10_ideal: ${R10_ideal} Ω = ${(R10_ideal/1000).toFixed(2)} kΩ</div>`
+
+      // 标准电阻吸附
+      const R10_standard = snapToStandardResistor(R10_ideal / 1000, 'E96')
+      output.innerHTML += `<div class="result">R10_standard: ${R10_standard} kΩ</div>`
+
+      // 计算 UVLO 开启电压
+      const uvlo_rising_typ = uvlo_th_typ + R10_standard * 1000 * (i_uvlo_bias_typ + uvlo_th_typ / (R11 * 1000))
+
+      output.innerHTML += `<div class="result">计算过程:</div>`
+      output.innerHTML += `<div class="result">R10_standard * 1000 = ${R10_standard * 1000} Ω</div>`
+      output.innerHTML += `<div class="result">(i_uvlo_bias_typ + uvlo_th_typ / (R11 * 1000)) = ${(i_uvlo_bias_typ + uvlo_th_typ / (R11 * 1000))} A</div>`
+      output.innerHTML += `<div class="result">R10 × (...) = ${R10_standard * 1000 * (i_uvlo_bias_typ + uvlo_th_typ / (R11 * 1000))} V</div>`
+
+      const resultClass = (uvlo_rising_typ > 100 || uvlo_rising_typ < 5) ? 'error' : 'success'
+      output.innerHTML += `<div class="result ${resultClass}"><strong>UVLO 开启电压 (Typ): ${uvlo_rising_typ.toFixed(2)} V</strong></div>`
+
+      if (uvlo_rising_typ > 100) {
+        output.innerHTML += `<div class="result error">❌ 错误：电压异常高！预期 8-10V</div>`
+      } else if (uvlo_rising_typ < 5) {
+        output.innerHTML += `<div class="result error">❌ 错误：电压异常低！预期 8-10V</div>`
+      } else {
+        output.innerHTML += `<div class="result success">✅ 正常：电压在合理范围</div>`
+      }
+    }
+  </script>
+</body>
+</html>
