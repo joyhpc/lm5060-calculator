@@ -26,8 +26,8 @@ def compute_performance(input_data: ReverseInput) -> PerformanceResult:
     Calculate system performance from component values.
 
     Reverse formulas derived from datasheet SNVS628H Section 8.2.2:
-    - OVP threshold from R8: VIN_MAX = OVPTH × (1 + R8/R11)
-    - UVLO threshold from R10: VIN_MIN = UVLOTH + R10 × (UVLO_BIAS + UVLOTH/R11)
+    - OVP threshold from R8, R9: VIN_MAX = OVPTH × (1 + R8/R9)
+    - UVLO threshold from R10, R11: VIN_MIN = UVLOTH + R10 × (UVLO_BIAS + UVLOTH/R11)
     - OCP delay from C_TIMER: t_delay = (C_TIMER × VTMRH) / ITIMERH
     - Current limit from Rs: I_LIMIT = (Rs × ISENSE - RO × IOUT-EN) / RDS(ON)
     - Gate slew rate from C_GATE: dV/dt = IGATE / C_GATE
@@ -49,21 +49,23 @@ def compute_performance(input_data: ReverseInput) -> PerformanceResult:
 
     # Convert inputs to Decimal
     r8 = Decimal(str(input_data.R8))
+    r9 = Decimal(str(input_data.R9))  # OVP pull-down
     r10 = Decimal(str(input_data.R10))
+    r11_uvlo = Decimal(str(input_data.R11))  # UVLO pull-down
     rs = Decimal(str(input_data.Rs))
     c_timer = Decimal(str(input_data.C_TIMER)) / Decimal("1e9")  # nF to F
     c_gate = Decimal(str(input_data.C_GATE)) / Decimal("1e9")  # nF to F
     rds_on = Decimal(str(input_data.rds_on)) / Decimal("1000")  # mΩ to Ω
 
     # Calculate OVP threshold (rising)
-    # From: R8 = R11 × (VIN_MAX - OVPTH) / OVPTH
-    # Solve: VIN_MAX = OVPTH × (1 + R8/R11)
-    ovp_threshold = ovp_th * (Decimal("1") + r8 / r11)
+    # From: R8 = R9 × (VIN_MAX - OVPTH) / OVPTH
+    # Solve: VIN_MAX = OVPTH × (1 + R8/R9)
+    ovp_threshold = ovp_th * (Decimal("1") + r8 / r9)
 
     # Calculate UVLO threshold (rising)
     # From: R10 = (VIN_MIN - UVLOTH) / (UVLO_BIAS + UVLOTH/R11)
     # Solve: VIN_MIN = UVLOTH + R10 × (UVLO_BIAS + UVLOTH/R11)
-    uvlo_rising = uvlo_th + r10 * (i_uvlo_bias + uvlo_th / r11)
+    uvlo_rising = uvlo_th + r10 * (i_uvlo_bias + uvlo_th / r11_uvlo)
 
     # Calculate UVLO falling (with hysteresis, typically ~6% lower)
     # Datasheet doesn't give exact formula, use typical 6% hysteresis

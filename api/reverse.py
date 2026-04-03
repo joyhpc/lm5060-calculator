@@ -18,6 +18,7 @@ class handler(BaseHTTPRequestHandler):
             # Convert to ReverseInput
             input_data = ReverseInput(
                 R8=data['R8'],
+                R9=data.get('R9', 10.0),
                 R10=data['R10'],
                 R11=data.get('R11', 10.0),
                 Rs=data['Rs'],

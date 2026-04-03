@@ -35,6 +35,7 @@ class ForwardInput(BaseModel):
 class BOMResult(BaseModel):
     """Output for forward calculation: component values"""
     R8: float       # OVP pull-up resistor (kΩ)
+    R9: float = 10.0  # OVP pull-down resistor (kΩ), fixed
     R10: float      # UVLO pull-up resistor (kΩ)
     R11: float = 10.0  # UVLO pull-down resistor (kΩ), fixed
     Rs: float       # SENSE resistor (Ω)
@@ -46,6 +47,7 @@ class BOMResult(BaseModel):
 class ReverseInput(BaseModel):
     """Input for reverse calculation: BOM → performance"""
     R8: float       # OVP pull-up resistor (kΩ)
+    R9: float = 10.0  # OVP pull-down resistor (kΩ)
     R10: float      # UVLO pull-up resistor (kΩ)
     R11: float = 10.0  # UVLO pull-down resistor (kΩ)
     Rs: float       # SENSE resistor (Ω)
@@ -53,7 +55,7 @@ class ReverseInput(BaseModel):
     C_GATE: float   # GATE capacitor (nF)
     rds_on: float   # MOSFET on-resistance (mΩ)
 
-    @field_validator('R8', 'R10', 'R11', 'Rs', 'C_TIMER', 'C_GATE', 'rds_on')
+    @field_validator('R8', 'R9', 'R10', 'R11', 'Rs', 'C_TIMER', 'C_GATE', 'rds_on')
     @classmethod
     def validate_positive(cls, v):
         if v <= 0:

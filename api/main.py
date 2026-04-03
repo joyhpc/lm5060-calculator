@@ -46,9 +46,10 @@ class ForwardRequest(BaseModel):
 
 
 class ReverseRequest(BaseModel):
-    R8: float = Field(..., description="OVP resistor (kΩ)", gt=0)
-    R10: float = Field(..., description="UVLO resistor (kΩ)", gt=0)
-    R11: float = Field(default=10.0, description="Divider bottom resistor (kΩ)", gt=0)
+    R8: float = Field(..., description="OVP pull-up resistor (kΩ)", gt=0)
+    R9: float = Field(default=10.0, description="OVP pull-down resistor (kΩ)", gt=0)
+    R10: float = Field(..., description="UVLO pull-up resistor (kΩ)", gt=0)
+    R11: float = Field(default=10.0, description="UVLO pull-down resistor (kΩ)", gt=0)
     Rs: float = Field(..., description="SENSE resistor (Ω)", gt=0)
     C_TIMER: float = Field(..., description="TIMER capacitor (nF)", gt=0)
     C_GATE: float = Field(..., description="GATE capacitor (nF)", gt=0)
@@ -125,6 +126,7 @@ async def forward_calculation(request: ForwardRequest):
         # Format response
         data = {
             "R8_kOhm": bom.R8,
+            "R9_kOhm": bom.R9,
             "R10_kOhm": bom.R10,
             "R11_kOhm": bom.R11,
             "Rs_Ohm": bom.Rs,
@@ -150,6 +152,7 @@ async def reverse_calculation(request: ReverseRequest):
         # Convert to ReverseInput
         input_data = ReverseInput(
             R8=request.R8,
+            R9=request.R9,
             R10=request.R10,
             R11=request.R11,
             Rs=request.Rs,

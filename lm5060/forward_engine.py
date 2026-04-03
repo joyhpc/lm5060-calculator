@@ -126,15 +126,19 @@ def compute_bom(input_data: ForwardInput) -> BOMResult:
     ocp_delay = Decimal(str(input_data.ocp_delay))
     dvdt = Decimal(str(input_data.dvdt))
 
-    # Calculate R8 (OVP resistor)
-    # Formula: R8 = R11 * (VIN_MAX - OVPTH) / OVPTH
-    # Source: Datasheet SNVS628H Section 8.2.3.2.1, Page 30
-    r8_raw = r11 * (vin_max - ovp_th) / ovp_th
+    # R9 and R11 are fixed at 10kΩ (independent pull-down resistors)
+    r9 = r11  # OVP pull-down = 10kΩ
+    r11_uvlo = r11  # UVLO pull-down = 10kΩ
 
-    # Calculate R10 (UVLO resistor)
+    # Calculate R8 (OVP pull-up resistor)
+    # Formula: R8 = R9 * (VIN_MAX - OVPTH) / OVPTH
+    # Source: Datasheet SNVS628H Section 8.2.3.2.1, Page 30
+    r8_raw = r9 * (vin_max - ovp_th) / ovp_th
+
+    # Calculate R10 (UVLO pull-up resistor)
     # Formula: R10 = (VIN_MIN - UVLOTH) / (UVLO_BIAS + UVLOTH / R11)
     # Source: Datasheet SNVS628H Section 8.2.3.2.1, Page 31
-    r10_raw = (vin_min - uvlo_th) / (i_uvlo_bias + uvlo_th / r11)
+    r10_raw = (vin_min - uvlo_th) / (i_uvlo_bias + uvlo_th / r11_uvlo)
 
     # Calculate C_TIMER
     # Formula: C_TIMER = (t_delay * ITIMERH) / VTMRH
@@ -165,8 +169,9 @@ def compute_bom(input_data: ForwardInput) -> BOMResult:
     # Round to appropriate precision
     return BOMResult(
         R8=round(float(r8_raw), PrecisionConfig.RESISTOR_DIGITS),
+        R9=float(r9),  # Fixed at 10kΩ
         R10=round(float(r10_raw), PrecisionConfig.RESISTOR_DIGITS),
-        R11=float(r11),
+        R11=float(r11_uvlo),  # Fixed at 10kΩ
         Rs=round(float(rs_raw), PrecisionConfig.RESISTOR_DIGITS),
         C_TIMER=round(float(c_timer_raw), PrecisionConfig.CAPACITOR_DIGITS),
         C_GATE=round(float(c_gate_raw), PrecisionConfig.CAPACITOR_DIGITS),

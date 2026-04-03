@@ -16,6 +16,7 @@ interface ForwardData {
 
 interface ReverseData {
   R8: number
+  R9: number
   R10: number
   R11: number
   Rs: number
@@ -52,15 +53,58 @@ function Tooltip({ text }: { text: string }) {
   )
 }
 
-// BOM 表格组件
+// BOM 表格组件（带公式 Tooltip）
 function BOMTable({ data }: { data: any }) {
   const bomItems = [
-    { designator: 'R8', value: `${data.R8_kOhm} kΩ`, description: 'OVP 上拉电阻' },
-    { designator: 'R10', value: `${data.R10_kOhm} kΩ`, description: 'UVLO 上拉电阻' },
-    { designator: 'R11', value: `${data.R11_kOhm} kΩ`, description: '分压器底部' },
-    { designator: 'Rs', value: `${data.Rs_Ohm} Ω`, description: 'SENSE 检测电阻' },
-    { designator: 'C1', value: `${data.C_TIMER_nF} nF`, description: 'TIMER 电容' },
-    { designator: 'C2', value: `${data.C_GATE_nF} nF`, description: 'GATE 电容' },
+    {
+      designator: 'R8',
+      value: `${data.R8_kOhm} kΩ`,
+      description: 'OVP 上拉电阻',
+      formula: 'R8 = R9 × (VIN_MAX - OVPTH) / OVPTH',
+      source: 'Datasheet SNVS628H Section 8.2.3.2.1, Page 30'
+    },
+    {
+      designator: 'R9',
+      value: `${data.R9_kOhm} kΩ`,
+      description: 'OVP 下拉电阻',
+      formula: 'R9 = 10 kΩ (固定值)',
+      source: 'Datasheet SNVS628H Section 8.2.3.2.1, Page 30'
+    },
+    {
+      designator: 'R10',
+      value: `${data.R10_kOhm} kΩ`,
+      description: 'UVLO 上拉电阻',
+      formula: 'R10 = (VIN_MIN - UVLOTH) / (UVLO_BIAS + UVLOTH/R11)',
+      source: 'Datasheet SNVS628H Section 8.2.3.2.1, Page 31'
+    },
+    {
+      designator: 'R11',
+      value: `${data.R11_kOhm} kΩ`,
+      description: 'UVLO 下拉电阻',
+      formula: 'R11 = 10 kΩ (固定值)',
+      source: 'Datasheet SNVS628H Section 8.2.3.2.1, Page 31'
+    },
+    {
+      designator: 'Rs',
+      value: `${data.Rs_Ohm} Ω`,
+      description: 'SENSE 检测电阻',
+      formula: 'Rs = V_DSTH / ISENSE + (RO × IOUT-EN) / ISENSE',
+      source: 'Datasheet SNVS628H Section 8.2.1.2.1, Page 25'
+    },
+    {
+      designator: 'C1',
+      value: `${data.C_TIMER_nF} nF`,
+      description: 'TIMER 电容',
+      formula: 'C_TIMER = (t_delay × ITIMERH) / VTMRH',
+      source: 'Datasheet SNVS628H Section 8.2.1.2.3, Page 28'
+    },
+    {
+      designator: 'C2',
+      value: `${data.C_GATE_nF} nF`,
+      description: 'GATE 电容',
+      formula: 'C_GATE = IGATE / (dV/dt)',
+      source: 'Datasheet SNVS628H Section 8.2.1.2.6, Page 28'
+    },
   ]
 
   return (
@@ -75,9 +119,16 @@ function BOMTable({ data }: { data: any }) {
         </thead>
         <tbody>
           {bomItems.map((item, i) => (
-            <tr key={i} className="border-b hover:bg-gray-50">
+            <tr key={i} className="border-b hover:bg-gray-50 group">
               <td className="px-4 py-2 font-mono font-semibold">{item.designator}</td>
-              <td className="px-4 py-2 font-mono">{item.value}</td>
+              <td className="px-4 py-2 font-mono relative">
+                {item.value}
+                <div className="invisible group-hover:visible absolute z-20 left-0 top-full mt-1 w-96 p-3 text-xs text-white bg-gray-900 rounded-lg shadow-xl">
+                  <div className="font-semibold mb-1">计算公式:</div>
+                  <div className="font-mono mb-2 text-yellow-300">{item.formula}</div>
+                  <div className="text-gray-400">{item.source}</div>
+                </div>
+              </td>
               <td className="px-4 py-2 text-gray-600">{item.description}</td>
             </tr>
           ))}
@@ -106,6 +157,7 @@ export default function Home() {
 
   const [reverseData, setReverseData] = useState<ReverseData>({
     R8: 170.0,
+    R9: 10.0,
     R10: 46.25,
     R11: 10.0,
     Rs: 14556.96,
@@ -125,9 +177,9 @@ export default function Home() {
       setForwardData(examples[exampleType])
     } else {
       const examples = {
-        default: { R8: 170.0, R10: 46.25, R11: 10.0, Rs: 14556.96, C_TIMER: 64.5, C_GATE: 48.0, rds_on: 5.0 },
-        '12V': { R8: 70.0, R10: 46.25, R11: 10.0, Rs: 17721.52, C_TIMER: 53.8, C_GATE: 30.0, rds_on: 8.0 },
-        '48V': { R8: 290.0, R10: 102.5, R11: 10.0, Rs: 10126.58, C_TIMER: 80.6, C_GATE: 80.0, rds_on: 10.0 },
+        default: { R8: 170.0, R9: 10.0, R10: 46.25, R11: 10.0, Rs: 14556.96, C_TIMER: 64.5, C_GATE: 48.0, rds_on: 5.0 },
+        '12V': { R8: 70.0, R9: 10.0, R10: 46.25, R11: 10.0, Rs: 17721.52, C_TIMER: 53.8, C_GATE: 30.0, rds_on: 8.0 },
+        '48V': { R8: 290.0, R9: 10.0, R10: 102.5, R11: 10.0, Rs: 10126.58, C_TIMER: 80.6, C_GATE: 80.0, rds_on: 10.0 },
       }
       setReverseData(examples[exampleType])
     }
@@ -144,6 +196,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           R8: forwardResult.data.R8_kOhm,
+          R9: forwardResult.data.R9_kOhm,
           R10: forwardResult.data.R10_kOhm,
           R11: forwardResult.data.R11_kOhm,
           Rs: forwardResult.data.Rs_Ohm,

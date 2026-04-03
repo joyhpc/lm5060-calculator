@@ -43,6 +43,7 @@ class handler(BaseHTTPRequestHandler):
                 'success': True,
                 'data': {
                     'R8_kOhm': bom.R8,
+                    'R9_kOhm': bom.R9,
                     'R10_kOhm': bom.R10,
                     'R11_kOhm': bom.R11,
                     'Rs_Ohm': bom.Rs,
