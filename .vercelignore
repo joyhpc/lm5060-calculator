@@ -1,0 +1,20 @@
+# 测试文件
+lib/__tests__
+*.test.ts
+*.test.tsx
+vitest.config.ts
+
+# 测试文档
+TESTING_QUICKSTART.md
+TEST_COVERAGE_REPORT.md
+TEST_COVERAGE_SUMMARY.md
+docs/TESTING.md
+
+# 测试脚本
+scripts/run-all-tests.sh
+
+# Python 测试
+tests/
+
+# 其他
+test-wca-browser.html
