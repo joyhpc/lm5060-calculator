@@ -471,7 +471,7 @@ describe('WCA Engine - 集成测试', () => {
     expect(result.inrush_current?.is_safe).toBeDefined()
   })
 
-  it('MOSFET SOA 检查：提供 mosfet_i2t_limit', () => {
+  it('MOSFET SOA 验证：自动基于 BSZ096N10LS5 datasheet', () => {
     const result = computeWCA({
       vin_min: 9.0,
       vin_max: 36.0,
@@ -480,11 +480,15 @@ describe('WCA Engine - 集成测试', () => {
       ocp_delay: 12.0,
       dvdt: 0.5,
       resistor_tolerance: '1%',
-      mosfet_i2t_limit: 1000,
     })
 
-    expect(result.soa_check).toBeDefined()
-    expect(result.soa_check?.i2t_actual).toBeGreaterThan(0)
-    expect(result.soa_check?.is_safe).toBeDefined()
+    expect(result.soa_verification).toBeDefined()
+    expect(result.soa_verification?.workingPoint.vds).toBe(18.0) // 36V / 2
+    expect(result.soa_verification?.workingPoint.id).toBe(30.0)
+    expect(result.soa_verification?.workingPoint.pulseWidth).toBe(12.0)
+    expect(result.soa_verification?.limitCurrent).toBeGreaterThan(0)
+    expect(result.soa_verification?.margin).toBeDefined()
+    expect(result.soa_verification?.status).toMatch(/safe|warning|danger/)
+    expect(result.soa_verification?.mosfetModel).toBe('BSZ096N10LS5')
   })
 })

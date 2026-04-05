@@ -197,8 +197,6 @@ export interface WCAInput {
   c_load?: number
   /** 连接器最大允许电流 (A) - 用于浪涌电流评估 */
   connector_max_current?: number
-  /** MOSFET SOA 参数 - I²t 极限值 (A²·s) */
-  mosfet_i2t_limit?: number
 }
 
 /** WCA 计算结果（区间范围） */
@@ -252,15 +250,6 @@ export interface WCAResult {
     peak_current: number  // 峰值浪涌电流 (A)
     is_safe: boolean      // 是否在连接器承受范围内
     warning?: string      // 警告信息
-  }
-
-  /** MOSFET SOA 热应力评估 */
-  soa_check?: {
-    i2t_actual: number    // 实际 I²t 值 (A²·s)
-    i2t_limit: number     // MOSFET 极限值 (A²·s)
-    safety_margin: number // 安全裕量（百分比）
-    is_safe: boolean
-    warning?: string
   }
 
   /** MOSFET SOA 安全区验证（基于 datasheet SOA 曲线） */
@@ -436,33 +425,7 @@ export function computeWCA(input: WCAInput): WCAResult {
   }
 
   // ========================================================================
-  // Step 6: MOSFET SOA 热应力评估（简化 I²t 方法）
-  // ========================================================================
-
-  let soa_check: WCAResult['soa_check'] | undefined
-
-  if (input.mosfet_i2t_limit) {
-    // 短路电流估算：I_SHORT ≈ VIN / RDS(ON)
-    const i_short = input.vin_max / (input.rds_on / 1000)
-
-    // 实际 I²t = I_SHORT² × t_FAULT
-    const t_fault = input.ocp_delay / 1000  // ms → s
-    const i2t_actual = i_short * i_short * t_fault
-
-    const safety_margin = ((input.mosfet_i2t_limit - i2t_actual) / input.mosfet_i2t_limit) * 100
-    const is_safe = i2t_actual <= input.mosfet_i2t_limit
-
-    soa_check = {
-      i2t_actual,
-      i2t_limit: input.mosfet_i2t_limit,
-      safety_margin,
-      is_safe,
-      warning: is_safe ? undefined : `MOSFET 热应力超限！实际 I²t = ${i2t_actual.toFixed(0)} A²·s，极限 = ${input.mosfet_i2t_limit} A²·s。建议减小 C_TIMER 至 ${(input.mosfet_i2t_limit / (i_short * i_short) * 1000).toFixed(1)} ms`
-    }
-  }
-
-  // ========================================================================
-  // Step 6.5: MOSFET SOA 安全区验证（基于 datasheet 曲线）
+  // Step 6: MOSFET SOA 安全区验证（基于 datasheet 曲线）
   // ========================================================================
 
   // 使用 BSZ096N10LS5 的 SOA 曲线进行精确验证
@@ -534,7 +497,6 @@ export function computeWCA(input: WCAInput): WCAResult {
     },
 
     inrush_current,
-    soa_check,
     soa_verification,
 
     alternatives: {

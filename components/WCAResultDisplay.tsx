@@ -257,8 +257,8 @@ export default function WCAResultDisplay({ result }: Props) {
   return (
     <div className="space-y-6">
       {/* 致命警告区域 */}
-      {result.soa_check && !result.soa_check.is_safe && (
-        <WarningBanner type="error" message={result.soa_check.warning!} />
+      {result.soa_verification && !result.soa_verification.safe && (
+        <WarningBanner type="error" message={`MOSFET 工作点超出 SOA 安全区！裕量：${result.soa_verification.margin.toFixed(1)}%`} />
       )}
 
       {result.inrush_current && !result.inrush_current.is_safe && (
@@ -395,34 +395,6 @@ export default function WCAResultDisplay({ result }: Props) {
           <div className="mt-3 text-xs text-gray-600 bg-white p-2 rounded border border-gray-200">
             💡 基于 {result.soa_verification.mosfetModel} datasheet Diagram 3 (Safe Operating Area)，
             考虑两个 MOS 串联，每个承受 V_IN/2 电压。
-          </div>
-        </div>
-      )}
-
-      {/* SOA 热应力评估（简化 I²t 方法） */}
-      {result.soa_check && (
-        <div className={`p-4 rounded-lg border ${result.soa_check.is_safe ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
-          <div className="font-semibold mb-2">
-            {result.soa_check.is_safe ? '✅' : '❌'} MOSFET I²t 热应力评估（简化方法）
-          </div>
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div>
-              <div className="text-gray-600">实际 I²t</div>
-              <div className="font-mono font-semibold">{result.soa_check.i2t_actual.toFixed(0)} A²·s</div>
-            </div>
-            <div>
-              <div className="text-gray-600">MOSFET 极限</div>
-              <div className="font-mono font-semibold">{result.soa_check.i2t_limit.toFixed(0)} A²·s</div>
-            </div>
-            <div>
-              <div className="text-gray-600">安全裕量</div>
-              <div className={`font-mono font-semibold ${result.soa_check.safety_margin > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {result.soa_check.safety_margin.toFixed(1)}%
-              </div>
-            </div>
-          </div>
-          <div className="mt-2 text-xs text-gray-600">
-            注：I²t 方法为简化估算，实际应以上方 SOA 曲线验证为准。
           </div>
         </div>
       )}

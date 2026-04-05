@@ -237,7 +237,7 @@ export default function WCAInputForm({ onCalculate, loading = false }: Props) {
           className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
         >
           <span>{showAdvanced ? '▼' : '▶'}</span>
-          高级参数（浪涌电流 & MOSFET SOA 评估）
+          高级参数（浪涌电流评估 & 自动 SOA 验证）
         </button>
 
         {showAdvanced && (
@@ -258,16 +258,12 @@ export default function WCAInputForm({ onCalculate, loading = false }: Props) {
               tooltip="电源连接器或前端保险丝的额定电流，用于评估浪涌电流是否安全"
               min={0}
             />
-            <InputField
-              label="MOSFET I²t 极限值"
-              value={input.mosfet_i2t_limit || ''}
-              onChange={(v) => setInput({ ...input, mosfet_i2t_limit: v || undefined })}
-              unit="A²·s"
-              tooltip="所选 MOSFET 的安全工作区 (SOA) 参数，通常在 datasheet 的脉冲电流曲线中查找。用于评估短路时的热应力是否会烧毁 MOSFET。"
-              min={0}
-            />
+            <div className="text-xs text-gray-600 bg-green-50 p-3 rounded border border-green-200">
+              ✅ <span className="font-semibold">MOSFET SOA 验证：</span>自动基于 BSZ096N10LS5 datasheet SOA 曲线进行验证，无需手动输入。
+              计算器会检查工作点 (V_DS, I_D, t_pulse) 是否在安全区内，并给出安全裕量百分比。
+            </div>
             <div className="text-xs text-gray-600 bg-blue-50 p-3 rounded">
-              💡 提示：如果不填写高级参数，将跳过浪涌电流和 SOA 评估。这些参数对于高可靠性设计（如工业/汽车应用）非常重要。
+              💡 提示：浪涌电流评估对于高可靠性设计（如工业/汽车应用）非常重要。
             </div>
           </div>
         )}
