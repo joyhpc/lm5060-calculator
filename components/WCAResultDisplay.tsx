@@ -311,11 +311,99 @@ export default function WCAResultDisplay({ result }: Props) {
       {/* 阈值漂移对比 */}
       <ThresholdDriftComparison result={result} />
 
-      {/* SOA 热应力评估 */}
+      {/* SOA 安全区验证（基于 datasheet 曲线） */}
+      {result.soa_verification && (
+        <div className={`p-4 rounded-lg border ${
+          result.soa_verification.status === 'safe' ? 'bg-green-50 border-green-300' :
+          result.soa_verification.status === 'warning' ? 'bg-yellow-50 border-yellow-300' :
+          'bg-red-50 border-red-300'
+        }`}>
+          <div className="font-semibold mb-3 flex items-center gap-2">
+            {result.soa_verification.status === 'safe' && '✅'}
+            {result.soa_verification.status === 'warning' && '⚠️'}
+            {result.soa_verification.status === 'danger' && '❌'}
+            <span>MOSFET 安全工作区 (SOA) 验证</span>
+            <span className="text-xs font-normal text-gray-600">
+              ({result.soa_verification.mosfetModel})
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-3">
+            <div>
+              <div className="text-gray-600 text-xs">工作电压 (V_DS)</div>
+              <div className="font-mono font-semibold">
+                {result.soa_verification.workingPoint.vds.toFixed(1)} V
+              </div>
+              <div className="text-xs text-gray-500">每个 MOS</div>
+            </div>
+            <div>
+              <div className="text-gray-600 text-xs">工作电流 (I_D)</div>
+              <div className="font-mono font-semibold">
+                {result.soa_verification.workingPoint.id.toFixed(1)} A
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-600 text-xs">脉冲宽度</div>
+              <div className="font-mono font-semibold">
+                {result.soa_verification.workingPoint.pulseWidth.toFixed(1)} ms
+              </div>
+            </div>
+            <div>
+              <div className="text-gray-600 text-xs">SOA 电流极限</div>
+              <div className="font-mono font-semibold text-blue-600">
+                {result.soa_verification.limitCurrent.toFixed(1)} A
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 p-3 bg-white rounded border border-gray-200">
+            <div className="flex-1">
+              <div className="text-xs text-gray-600 mb-1">安全裕量</div>
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+                <div
+                  className={`h-full transition-all ${
+                    result.soa_verification.margin >= 20 ? 'bg-green-500' :
+                    result.soa_verification.margin >= 0 ? 'bg-yellow-500' :
+                    'bg-red-500'
+                  }`}
+                  style={{ width: `${Math.max(0, Math.min(100, result.soa_verification.margin))}%` }}
+                />
+              </div>
+            </div>
+            <div className={`font-mono font-bold text-lg ${
+              result.soa_verification.margin >= 20 ? 'text-green-600' :
+              result.soa_verification.margin >= 0 ? 'text-yellow-600' :
+              'text-red-600'
+            }`}>
+              {result.soa_verification.margin.toFixed(1)}%
+            </div>
+          </div>
+
+          {result.soa_verification.margin < 20 && (
+            <div className="mt-3 text-xs p-2 rounded bg-white border border-gray-300">
+              <div className="font-semibold mb-1">
+                {result.soa_verification.margin < 0 ? '🚨 超出 SOA 安全区！' : '⚠️ 裕量不足 20%'}
+              </div>
+              <div className="text-gray-700">
+                {result.soa_verification.margin < 0
+                  ? '工作点超出 MOSFET 安全工作区，可能导致器件损坏。建议：(1) 降低电流限制，(2) 减小 OCP 延时，(3) 选用更高规格的 MOSFET。'
+                  : '工作点接近 SOA 边界，建议增加安全裕量至 20% 以上。'}
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3 text-xs text-gray-600 bg-white p-2 rounded border border-gray-200">
+            💡 基于 {result.soa_verification.mosfetModel} datasheet Diagram 3 (Safe Operating Area)，
+            考虑两个 MOS 串联，每个承受 V_IN/2 电压。
+          </div>
+        </div>
+      )}
+
+      {/* SOA 热应力评估（简化 I²t 方法） */}
       {result.soa_check && (
         <div className={`p-4 rounded-lg border ${result.soa_check.is_safe ? 'bg-green-50 border-green-300' : 'bg-red-50 border-red-300'}`}>
           <div className="font-semibold mb-2">
-            {result.soa_check.is_safe ? '✅' : '❌'} MOSFET 安全工作区 (SOA) 评估
+            {result.soa_check.is_safe ? '✅' : '❌'} MOSFET I²t 热应力评估（简化方法）
           </div>
           <div className="grid grid-cols-3 gap-4 text-sm">
             <div>
@@ -332,6 +420,9 @@ export default function WCAResultDisplay({ result }: Props) {
                 {result.soa_check.safety_margin.toFixed(1)}%
               </div>
             </div>
+          </div>
+          <div className="mt-2 text-xs text-gray-600">
+            注：I²t 方法为简化估算，实际应以上方 SOA 曲线验证为准。
           </div>
         </div>
       )}

@@ -8,7 +8,11 @@
  * 4. E96/E24 标准电阻吸附与反向验算
  * 5. MOSFET SOA 热应力预警
  * 6. 浪涌电流计算（容性负载联动）
+ * 7. MOSFET SOA 安全区验证（基于 datasheet 曲线）
  */
+
+import { checkSeriesMOSFETSOA } from './mosfet-soa'
+import { BSZ096N10LS5_SPECS } from './mosfet-soa-data'
 
 // ============================================================================
 // 1. IC 容差数据（来自 LM5060 datasheet SNVS628H Section 6）
@@ -259,6 +263,20 @@ export interface WCAResult {
     warning?: string
   }
 
+  /** MOSFET SOA 安全区验证（基于 datasheet SOA 曲线） */
+  soa_verification?: {
+    safe: boolean           // 是否在安全区内
+    margin: number          // 安全裕量 [%]
+    limitCurrent: number    // 该电压下的 SOA 电流极限 [A]
+    workingPoint: {
+      vds: number          // 工作电压 [V]
+      id: number           // 工作电流 [A]
+      pulseWidth: number   // 脉冲宽度 [ms]
+    }
+    status: 'safe' | 'warning' | 'danger'
+    mosfetModel: string    // MOSFET 型号
+  }
+
   /** 标准电阻备选方案 */
   alternatives: {
     R8: number[]
@@ -418,7 +436,7 @@ export function computeWCA(input: WCAInput): WCAResult {
   }
 
   // ========================================================================
-  // Step 6: MOSFET SOA 热应力评估
+  // Step 6: MOSFET SOA 热应力评估（简化 I²t 方法）
   // ========================================================================
 
   let soa_check: WCAResult['soa_check'] | undefined
@@ -441,6 +459,26 @@ export function computeWCA(input: WCAInput): WCAResult {
       is_safe,
       warning: is_safe ? undefined : `MOSFET 热应力超限！实际 I²t = ${i2t_actual.toFixed(0)} A²·s，极限 = ${input.mosfet_i2t_limit} A²·s。建议减小 C_TIMER 至 ${(input.mosfet_i2t_limit / (i_short * i_short) * 1000).toFixed(1)} ms`
     }
+  }
+
+  // ========================================================================
+  // Step 6.5: MOSFET SOA 安全区验证（基于 datasheet 曲线）
+  // ========================================================================
+
+  // 使用 BSZ096N10LS5 的 SOA 曲线进行精确验证
+  const soaResult = checkSeriesMOSFETSOA(
+    input.vin_max,
+    input.i_limit,
+    input.ocp_delay
+  )
+
+  const soa_verification: WCAResult['soa_verification'] = {
+    safe: soaResult.safe,
+    margin: soaResult.margin,
+    limitCurrent: soaResult.limitCurrent,
+    workingPoint: soaResult.workingPoint,
+    status: soaResult.status,
+    mosfetModel: BSZ096N10LS5_SPECS.partNumber,
   }
 
   // ========================================================================
@@ -497,6 +535,7 @@ export function computeWCA(input: WCAInput): WCAResult {
 
     inrush_current,
     soa_check,
+    soa_verification,
 
     alternatives: {
       R8: getAlternativeResistors(R8_ideal, series),
